@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const openAIKey = "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"; // Replace with your actual OpenAI API key
+const openAIKey = ""; // Replace with your actual OpenAI API key
 
 export const getOpenAIResponse = async (input: string): Promise<string> => {
   const url = "https://api.openai.com/v1/completions";
@@ -10,7 +10,7 @@ export const getOpenAIResponse = async (input: string): Promise<string> => {
     const response = await axios.post(
       url,
       {
-        prompt: `genrate 40 lines story title ${input}`,
+        prompt: `give a story titled ${input} 100 lines`,
         max_tokens: 50,
         model: "text-davinci-003",
       },
