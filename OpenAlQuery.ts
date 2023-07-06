@@ -10,8 +10,8 @@ export const getOpenAIResponse = async (input: string): Promise<string> => {
     const response = await axios.post(
       url,
       {
-        prompt: `give a story titled ${input} 100 lines`,
-        max_tokens: 50,
+        prompt: `Summarize ${input}`,
+        max_tokens: maxTokens,
         model: "text-davinci-003",
       },
       {
