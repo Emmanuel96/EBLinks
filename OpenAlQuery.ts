@@ -1,16 +1,19 @@
 import axios from "axios";
 
-const openAIKey = ""; // Replace with your actual OpenAI API key
+const openAIKey = "";
+const maxTokens = 1000; // Adjust the response length as needed
 
-export const getOpenAIResponse = async (input: string): Promise<string> => {
+export const getOpenAIResponse = async (
+  input: string,
+  pageSize: number = 500
+): Promise<string[]> => {
   const url = "https://api.openai.com/v1/completions";
-  const maxTokens = 1000; // Adjust the response length as needed
 
   try {
     const response = await axios.post(
       url,
       {
-        prompt: `Summarize ${input}`,
+        prompt: `Find a story called ${input} Explain seven key points then give detailed explanation (700 words) to each of them`,
         max_tokens: maxTokens,
         model: "text-davinci-003",
       },
@@ -22,20 +25,17 @@ export const getOpenAIResponse = async (input: string): Promise<string> => {
       }
     );
 
-    // const response = await fetch("/api/generate", {
-    //     method: "POST",
-    //     headers: {
-    //       "Content-Type": "application/json",
-    //     },
-    //     body: JSON.stringify({ result: input }),
-    //   });
-
     if (response.data.choices && response.data.choices.length > 0) {
-      return response.data.choices[0].text.trim();
+      const fullText = response.data.choices[0].text.trim();
+      const pages: string[] = [];
+      for (let i = 0; i < fullText.length; i += pageSize) {
+        pages.push(fullText.slice(i, i + pageSize));
+      }
+      return pages;
     }
   } catch (error) {
     console.error("Error making OpenAI API request:", error);
   }
 
-  return "";
+  return [];
 };
