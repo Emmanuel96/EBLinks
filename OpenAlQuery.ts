@@ -1,7 +1,7 @@
 import axios from "axios";
 
-const openAIKey = "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";
-const maxTokens = 1000; // Adjust the response length as needed
+// const openAIKey = "";
+// const maxTokens = 1000; // Adjust the response length as needed
 
 export const getOpenAIResponse = async (
   input: string,
