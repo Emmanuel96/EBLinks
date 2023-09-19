@@ -4,6 +4,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "./types";
 import { getOpenAIResponse } from "./OpenAlQuery";
+import Tts from 'react-native-tts';
 
 type ResponseScreenProps = {
   route: RouteProp<RootStackParamList, "Response">;
@@ -27,8 +28,16 @@ const ResponseScreen: React.FC<ResponseScreenProps> = ({
   }, [userInput]);
 
   const readText = () => {
-    // Speak the current page text using Tts.speak(responsePages[currentPage]);
-  };
+  // Ensure the TTS engine is available on your device
+  Tts.getInitStatus().then((initStatus) => {
+    if (initStatus !== 'success') {
+      console.log('TTS is not available on this device.');
+    } else {
+      // Speak the current page text using TTS
+      Tts.speak(responsePages[currentPage]);
+    }
+  });
+};
 
   const goToNextPage = () => {
     setCurrentPage((prevPage) =>
