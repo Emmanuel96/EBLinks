@@ -4,7 +4,7 @@ import { StackNavigationProp } from "@react-navigation/stack";
 import { RouteProp } from "@react-navigation/native";
 import { RootStackParamList } from "./types";
 import { getOpenAIResponse } from "./OpenAlQuery";
-import Tts from 'react-native-tts';
+import * as Speech from 'expo-speech';
 
 type ResponseScreenProps = {
   route: RouteProp<RootStackParamList, "Response">;
@@ -18,6 +18,7 @@ const ResponseScreen: React.FC<ResponseScreenProps> = ({
   const { userInput } = route.params;
   const [responsePages, setResponsePages] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(0);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -27,26 +28,35 @@ const ResponseScreen: React.FC<ResponseScreenProps> = ({
     fetchData();
   }, [userInput]);
 
-  const readText = () => {
-  // Ensure the TTS engine is available on your device
-  Tts.getInitStatus().then((initStatus) => {
-    if (initStatus !== 'success') {
-      console.log('TTS is not available on this device.');
+  const toggleSpeech = () => {
+    const textToSpeak = responsePages.join('');
+
+    if (isSpeaking) {
+      Speech.pause();
+      setIsSpeaking(false);
     } else {
-      // Speak the current page text using TTS
-      Tts.speak(responsePages[currentPage]);
+      Speech.speak(textToSpeak, {
+        onDone: () => {
+          setIsSpeaking(false);
+        },
+        onStopped: () => {
+          setIsSpeaking(false);
+        },
+      });
+      setIsSpeaking(true);
     }
-  });
-};
+  };
 
   const goToNextPage = () => {
     setCurrentPage((prevPage) =>
       Math.min(prevPage + 1, responsePages.length - 1)
     );
+    // toggleSpeech();
   };
 
   const goToPreviousPage = () => {
     setCurrentPage((prevPage) => Math.max(prevPage - 1, 0));
+    // toggleSpeech();
   };
 
   return (
@@ -67,7 +77,7 @@ const ResponseScreen: React.FC<ResponseScreenProps> = ({
           disabled={currentPage === responsePages.length - 1}
         />
       </View>
-      <Button title="Listen" onPress={readText} />
+      <Button title={isSpeaking ? "Pause" : "Speak"} onPress={toggleSpeech} />
     </View>
   );
 };
