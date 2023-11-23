@@ -19,45 +19,108 @@ const ResponseScreen: React.FC<ResponseScreenProps> = ({
   const [responsePages, setResponsePages] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState<number>(0);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [sections, setSections] = useState<string[]>([]);
+  const [currentSectionIndex, setCurrentSectionIndex] = useState<number>(0);
+
+  console.log('Current page --->', currentPage)
+  console.log('Sections --->', sections)
 
   useEffect(() => {
     const fetchData = async () => {
       const pages = await getOpenAIResponse(userInput);
       setResponsePages(pages);
+      const sections = pages[currentPage].split(' ').reduce((acc, word, i) => {
+        if (i % 20 === 0) acc.push('');
+        acc[acc.length - 1] += ' ' + word;
+        return acc;
+      }, [] as string[]);
+      setSections(sections);
     };
     fetchData();
-  }, [userInput]);
+  }, [userInput, currentPage]);
 
-  const toggleSpeech = () => {
-    const textToSpeak = responsePages.join('');
+  let currenctSection = 0;
 
-    if (isSpeaking) {
-      Speech.pause();
-      setIsSpeaking(false);
-    } else {
-      Speech.speak(textToSpeak, {
-        onDone: () => {
-          setIsSpeaking(false);
-        },
-        onStopped: () => {
-          setIsSpeaking(false);
-        },
-      });
-      setIsSpeaking(true);
+  const stopSpeaking = () => {
+    Speech.stop();
+    setIsSpeaking(false);
+  }
+
+  const startSpeaking = (text: string, index: number) => {
+    Speech.speak(text, {
+      onDone: () => {
+        const maxSection = sections.length - 1
+        if (index < maxSection) {
+          toggleSpeech(false, false, true, false, index + 1)
+        }
+      },
+      onStopped: () => {
+        setIsSpeaking(false);
+      },
+      onStart: () => {
+        setIsSpeaking(true);
+      },
+    });
+  }
+
+  const toggleSpeech = (shouldPlay: boolean, shouldPause: boolean, goFoward: boolean, goBack: boolean, index?: number) => {
+    if (shouldPause) {
+      stopSpeaking()
+      return;
     }
-  };
+  
+    if (typeof index !== 'number') {
+      return;
+    }
+  
+    let textToSpeak = sections[index];
+  
+    if (shouldPlay) {
+      startSpeaking(textToSpeak, index);
+      return;
+    }
+  
+    if (goFoward) {
+      if (isSpeaking) {
+        stopSpeaking()
+      }
+  
+      textToSpeak = sections[index];
+      setCurrentSectionIndex((prevState) => {
+        const newState = Math.min(prevState + 1, sections.length - 1);
+        startSpeaking(sections[newState], newState);
+        return newState;
+      });
+    }
+  
+    if (goBack) {
+      if (isSpeaking) {
+        stopSpeaking()
+      }
+  
+      setCurrentSectionIndex((prevState) => {
+        const newState = Math.max(prevState - 1, 0);
+        startSpeaking(sections[newState], newState);
+        return newState;
+      });
+    }
+  }
 
   const goToNextPage = () => {
-    setCurrentPage((prevPage) =>
-      Math.min(prevPage + 1, responsePages.length - 1)
-    );
-    // toggleSpeech();
+    setCurrentPage((prevPage) => {
+      const nextPage = Math.min(prevPage + 1, responsePages.length - 1);
+      setCurrentSectionIndex(0);
+      return nextPage;
+    });
   };
 
   const goToPreviousPage = () => {
-    setCurrentPage((prevPage) => Math.max(prevPage - 1, 0));
-    // toggleSpeech();
-  };
+    setCurrentPage((prevPage) => {
+      const oldPage = Math.max(prevPage - 1, 0);
+      setCurrentSectionIndex(0); // Reset the section index
+      return oldPage;
+    });
+  };  
 
   return (
     <View style={styles.container}>
@@ -77,7 +140,23 @@ const ResponseScreen: React.FC<ResponseScreenProps> = ({
           disabled={currentPage === responsePages.length - 1}
         />
       </View>
-      <Button title={isSpeaking ? "Pause" : "Speak"} onPress={toggleSpeech} />
+      <View style={styles.buttonContainer}>
+        <Button
+          title="Rewind"
+          onPress={() => {
+            toggleSpeech(false, false, false, true, Math.max(currentSectionIndex + 1, 0));
+          }}
+        />
+        <Button 
+          title={isSpeaking ? "Pause" : "Speak"} 
+          onPress={() => isSpeaking ? toggleSpeech(false, true, false, false) : toggleSpeech(true, false, false, false, currentSectionIndex)} />
+        <Button
+          title="Fast Forward"
+          onPress={() => {
+            toggleSpeech(false, false, true, false, Math.min(currentSectionIndex + 1, sections.length - 1));
+          }}
+        />
+      </View>
     </View>
   );
 };
