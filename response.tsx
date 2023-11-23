@@ -76,7 +76,6 @@ const ResponseScreen: React.FC<ResponseScreenProps> = ({
     let textToSpeak = sections[index];
   
     if (shouldPlay) {
-      console.log(textToSpeak)
       startSpeaking(textToSpeak, index);
       return;
     }
@@ -108,15 +107,20 @@ const ResponseScreen: React.FC<ResponseScreenProps> = ({
   }
 
   const goToNextPage = () => {
-    setCurrentPage((prevPage) =>
-      Math.min(prevPage + 1, responsePages.length - 1)
-    );
+    setCurrentPage((prevPage) => {
+      const nextPage = Math.min(prevPage + 1, responsePages.length - 1);
+      setCurrentSectionIndex(0);
+      return nextPage;
+    });
   };
 
   const goToPreviousPage = () => {
-    setCurrentPage((prevPage) => Math.max(prevPage - 1, 0));
-    // toggleSpeech();
-  };
+    setCurrentPage((prevPage) => {
+      const newPage = Math.max(prevPage - 1, 0);
+      setCurrentSectionIndex(0); // Reset the section index
+      return newPage;
+    });
+  };  
 
   return (
     <View style={styles.container}>
