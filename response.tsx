@@ -116,9 +116,9 @@ const ResponseScreen: React.FC<ResponseScreenProps> = ({
 
   const goToPreviousPage = () => {
     setCurrentPage((prevPage) => {
-      const newPage = Math.max(prevPage - 1, 0);
+      const oldPage = Math.max(prevPage - 1, 0);
       setCurrentSectionIndex(0); // Reset the section index
-      return newPage;
+      return oldPage;
     });
   };  
 
